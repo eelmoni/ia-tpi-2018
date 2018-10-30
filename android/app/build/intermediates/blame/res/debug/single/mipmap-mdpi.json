@@ -2,5 +2,9 @@
     {
         "merged": "/Users/hazlan/Source/experiments/whattheheckisthis/android/app/build/intermediates/res/merged/debug/mipmap-mdpi/ic_launcher.png",
         "source": "/Users/hazlan/Source/experiments/whattheheckisthis/android/app/src/main/res/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/home/emma/whattheheckisthis/android/app/build/intermediates/res/merged/debug/mipmap-mdpi/ic_launcher.png",
+        "source": "/home/emma/whattheheckisthis/android/app/src/main/res/mipmap-mdpi/ic_launcher.png"
     }
 ]

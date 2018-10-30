@@ -1,200 +1,160 @@
-import React, {Component} from 'react';
-import {Text, View, StyleSheet, Alert, NativeModules, ToastAndroid} from 'react-native';
+import React from 'react';
+import {
+    Text,
+    View,
+    NativeModules,
+    ScrollView,
+    TouchableOpacity
+} from 'react-native';
 import Camera from 'react-native-camera';
-import ImageResizer from 'react-native-image-resizer';
 import Spinner from 'react-native-spinkit';
-import config from './config';
+import Results from './src/results/Results';
+import styles from './App.styles';
+import utils from './src/utils';
 
 export default class App extends React.Component {
     state = {
         loading: false,
+        initial: null,
+        end: null,
+        takingPicture: false,
+        startSearch: false
     };
 
-    render() {
-        console.log('Starting app');
-        console.log('config', config);
+    getCameraProps() {
+        return {
+            ref: (cam) => { this.camera = cam; },
+            style: styles.preview,
+            aspect: Camera.constants.Aspect.fill,
+            playSoundOnCapture: false
+        };
+    }
+
+    getTextProps(typeState) {
+        return {
+            style: styles.capture,
+            onPress: () => { this.callCamera(typeState); }
+        };
+    }
+
+    getSpinnerProps() {
+        return {
+            style: styles.spinner,
+            isVisible: true,
+            size: 70,
+            type: 'Bounce',
+            color: 'white'
+        };
+    }
+
+    renderPictureSection(pictureState, textPictureButton, onPressButton) {
+        return (
+            <View style={styles.pictureSectionContainer}>
+                <TouchableOpacity style={styles.pictureButton} onPress={onPressButton}>
+                    <Text style={styles.pictureButtonText}>{textPictureButton}</Text>
+                </TouchableOpacity>
+                <Text style={styles.pictureStateText}>{pictureState}</Text>
+            </View>
+        );
+    }
+
+    renderStartSection() {
+        return (
+            <TouchableOpacity
+                style={[styles.pictureButton, { margin: 10, padding: 10 }]}
+                onPress={() => { this.setState({ startSearch: true }) }}>
+                <Text style={styles.pictureButtonText}>{'COMENZAR!'}</Text>
+            </TouchableOpacity>
+        );
+    }
+
+    renderCamera(typeState) {
+        const { loading } = this.state;
 
         return (
             <View style={styles.container}>
-                <Camera
-                    ref={(cam) => {
-                        this.camera = cam;
-                    }}
-                    style={styles.preview}
-                    aspect={Camera.constants.Aspect.fill}
-                    playSoundOnCapture={false}>
-                    <View><Text>{this.state.loading}</Text></View>
+                <Camera {...this.getCameraProps()}>
                     {
-                        (!this.state.loading) ?
-                                <Text
-                                    style={styles.capture}
-                                    onPress={this.takePicture.bind(this)}/>
-                            :
-                            <View>
-                                <Spinner
-                                    style={styles.spinner}
-                                    isVisible={true}
-                                    size={70}
-                                    type={'Bounce'}
-                                    color={'white'}/>
-                            </View>
-
+                        (!loading)
+                            ? <Text {...this.getTextProps(typeState)} />
+                            : <View><Spinner {...this.getSpinnerProps()} /></View>
                     }
                 </Camera>
             </View>
         );
     }
 
-    takePicture() {
-        if (!this.state.loading) {
+    renderResultsSection() {
+        const { initial, end, startSearch } = this.state;
+
+        return (
+            <View style={{ flex: 1 }}>
+                {
+                    (initial && end && startSearch)
+                        ? <Results initial={initial} end={end} />
+                        : null
+                }
+            </View>
+        );
+    }
+
+    render() {
+        const { takingPicture, typeState, initial, end } = this.state;
+
+        if (takingPicture) {
+            return this.renderCamera(typeState);
+        }
+
+        return (
+            <ScrollView style={{ flex: 1 }}>
+                {this.renderPictureSection(
+                    (initial) ? 'OK' : '',
+                    'Tomar Estado Inicial',
+                    () => { this.setState({ takingPicture: true, typeState: 'initial' }); }
+                )}
+                {this.renderPictureSection(
+                    (end) ? 'OK' : '',
+                    'Tomar Estado Final',
+                    () => { this.setState({ takingPicture: true, typeState: 'end' }); }
+                )}
+                {this.renderStartSection()}
+                {this.renderResultsSection()}
+            </ScrollView>
+        );
+    }
+
+    takePicture = (typeState) => {
+        const captureOptions = { metadata: {} };
+        this.camera.capture(captureOptions).then((data) => {
+            utils.resizeImage(data.path, (resizedImageUri) => {
+                NativeModules.RNImageToBase64.getBase64String(resizedImageUri, async (err, base64) => {
+                    let result = null;
+
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        result = await utils.searchText(base64);
+                    }
+
+                    this.setState({
+                        loading: false,
+                        takingPicture: false,
+                        [typeState]: result
+                    });
+                });
+            });
+        }).catch(err => console.error(err));
+    }
+
+    callCamera = (typeState) => {
+        const { loading } = this.state;
+
+        if (!loading) {
             this.setState({
                 loading: true
-            });
-
-            const options = {};
-            this.camera.capture({metadata: options})
-                .then((data) => {
-
-                    resizeImage(data.path, (resizedImageUri) => {
-                        NativeModules.RNImageToBase64.getBase64String(resizedImageUri, async (err, base64) => {
-                            // Do something with the base64 string
-                            if (err) {
-                                console.error(err)
-                            }
-                            console.log('converted to base64');
-                            // ToastAndroid.show('converted to base64', ToastAndroid.SHORT);
-
-                            let result = await checkForLabels(base64);
-                            console.log(result);
-                            // ToastAndroid.show(JSON.stringify(result), ToastAndroid.SHORT);
-
-                            //custom filter
-                            let filteredResult = filterLabelsList(result.responses[0], 0.3);
-                            displayResult(filteredResult);
-
-                            this.setState({
-                                loading: false
-                            });
-                        })
-                    })
-                })
-                .catch(err => console.error(err));
+            }, () => { this.takePicture(typeState); });
         } else {
-            console.log('NO GO' + this.state.loading)
+            console.log('Loading photo...');
         }
     }
 }
-
-function displayResult(filteredResult) {
-    let labelString = '';
-    let count = 1;
-    if (filteredResult.length > 1) {
-        labelString = '... or it might be ';
-        filteredResult.forEach((resLabel) => {
-            if (count == filteredResult.length) {
-                labelString += 'a ' + resLabel.description + '! I\'m pretty sure! Maybe.'
-            } else if (count == 1) {
-
-            } else {
-                labelString += 'a ' + resLabel.description + ' or '
-            }
-            count++;
-        });
-
-        Alert.alert(
-            'Its a ' + filteredResult[0].description + '!',
-            labelString
-        );
-    } else {
-        Alert.alert(
-            'Its a ' + filteredResult[0].description + '!'
-        );
-    }
-}
-
-// according to https://cloud.google.com/vision/docs/supported-files, recommended image size for labels detection is 640x480
-function resizeImage(path, callback, width = 640, height = 480) {
-    ImageResizer.createResizedImage(path, width, height, 'JPEG', 80).then((resizedImageUri) => {
-        callback(resizedImageUri);
-
-    }).catch((err) => {
-        console.error(err)
-    });
-}
-
-//run filter for frontend side logic (filter for hotdog, if you wanna do a "is hotdog or not" app)
-function filterLabelsList(response, minConfidence = 0) {
-    let resultArr = [];
-    response.labelAnnotations.forEach((label) => {
-        if (label.score > minConfidence) {
-            resultArr.push(label);
-        }
-    });
-    return resultArr;
-}
-
-// API call to google cloud
-async function checkForLabels(base64) {
-
-    return await
-        fetch(config.googleCloud.api + config.googleCloud.apiKey, {
-            method: 'POST',
-            body: JSON.stringify({
-                "requests": [
-                    {
-                        "image": {
-                            "content": base64
-                        },
-                        "features": [
-                            {
-                                "type": "LABEL_DETECTION"
-                            }
-                        ]
-                    }
-                ]
-            })
-        }).then((response) => {
-            return response.json();
-        }, (err) => {
-            console.error('promise rejected')
-            console.error(err)
-        });
-}
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        flexDirection: 'row',
-    },
-    preview: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        alignItems: 'center'
-    },
-    capture: {
-        flex: 0,
-        backgroundColor: '#fff',
-        borderRadius: 50,
-        padding: 10,
-        margin: 50,
-        height: 70,
-        width: 70,
-        borderColor: 'rgba(0, 0, 0, 0.3)',
-        borderWidth: 15
-    },
-    loadingMsg: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%'
-    },
-    loadingText: {
-        fontSize: 18,
-        padding: 5,
-        borderRadius: 20,
-        backgroundColor: 'white',
-        margin: 30
-    },
-    spinner: {
-        marginBottom: 50
-    },
-});

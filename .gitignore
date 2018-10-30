@@ -2,4 +2,8 @@ node_modules/
 .expo/
 npm-debug.*
 .idea/
-/android/app/build/outputs/
+android/app/build/outputs/
+android/app/build/tmp/
+android/app/build/intermediates/
+android/app/build/generated/
+android/.gradle/
