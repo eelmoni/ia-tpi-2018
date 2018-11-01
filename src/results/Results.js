@@ -5,9 +5,9 @@ import {
     ScrollView,
 } from 'react-native';
 import Spinner from 'react-native-spinkit';
-// import utils from './src/utils';
 import { start } from '../search';
 import styles from './Results.styles';
+import getMatrix from './recognition';
 
 export default class App extends React.Component {
     state = {
@@ -25,16 +25,9 @@ export default class App extends React.Component {
     }
 
     render() {
-        let startingState = [
-            [7, 2, 5],
-            ['-', 4, 8],
-            [3, 6, 1]
-        ];
-        let endingState = [
-            [1, 2, 3],
-            [4, '-', 5],
-            [6, 7, 8]
-        ];
+        const { initial, end } = this.props;
+        const startingState = getMatrix(initial);
+        const endingState = getMatrix(end);
         const { loading } = this.state;
 
         if (loading) {

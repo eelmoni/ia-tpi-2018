@@ -8,7 +8,6 @@ export function showAlgorithmBeingUsed() {
 }
 
 export function start(initial, end) {
-    /////////// ${showAlgorithmName()} ///////////\n\n
     let searchResult = '';
     let startingState = new BoardState(initial);
     let endingState = new BoardState(end);
@@ -17,7 +16,6 @@ export function start(initial, end) {
     let search = bestFirst(startingState, endingState);
     search.boardStates.forEach(function(state) {
         searchResult += state.print();
-        // console.log(state.print());
     });
 
     searchResult += '\n\n';

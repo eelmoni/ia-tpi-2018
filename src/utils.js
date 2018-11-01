@@ -1,3 +1,4 @@
+// Nombre del archivo: utils.js
 import ImageResizer from 'react-native-image-resizer';
 import config from '../config.json';
 
@@ -39,14 +40,3 @@ export default {
     searchText,
     resizeImage,
 };
-
-//run filter for frontend side logic (filter for hotdog, if you wanna do a "is hotdog or not" app)
-// function filterLabelsList(response, minConfidence = 0) {
-//     let resultArr = [];
-//     response.labelAnnotations.forEach((label) => {
-//         if (label.score > minConfidence) {
-//             resultArr.push(label);
-//         }
-//     });
-//     return resultArr;
-// }

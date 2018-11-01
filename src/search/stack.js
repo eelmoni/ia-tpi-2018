@@ -1,3 +1,4 @@
+// Nombre del archivo: stack.js
 export class Stack {
     constructor() {
         this.items = [];
@@ -25,4 +26,3 @@ export class Stack {
         return this.items.length;
     }
 }
-

@@ -1,3 +1,4 @@
+// Nombre de archivo: bestFirst.js
 import {BoardState} from './boardState.js';
 import Heap from 'heap';
 import {Search} from './search';

@@ -1,3 +1,4 @@
+// Nombre de archivo: boardState.js
 export class BoardState {
     constructor(itemsPositions, parent) {
         let i = 0;

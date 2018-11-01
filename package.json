@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "heap": "^0.2.6",
+    "lodash.orderby": "^4.6.0",
     "react": "16.0.0-alpha.6",
     "react-native": "^0.43.4",
     "react-native-camera": "^0.9.4",
